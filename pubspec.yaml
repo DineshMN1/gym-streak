@@ -1,0 +1,26 @@
+name: gym_streak
+description: "Track your gym streaks with GitHub-style contribution heatmaps."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.6.1
+  supabase_flutter: ^2.8.0
+  go_router: ^15.1.0
+  google_fonts: ^6.2.1
+  intl: ^0.20.2
+  flutter_animate: ^4.5.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

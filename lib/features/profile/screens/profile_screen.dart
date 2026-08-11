@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_streak/core/streak/streak_stats.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
 import 'package:gym_streak/features/home/providers/workout_provider.dart';
@@ -29,7 +30,10 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   _buildAvatar(context, user),
                   const SizedBox(height: 16),
-                  Text(user.name, style: Theme.of(context).textTheme.headlineMedium),
+                  Text(
+                    user.name,
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     user.email,
@@ -57,10 +61,9 @@ class ProfileScreen extends ConsumerWidget {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          user.workoutTypes
-                              .map((t) => _buildChip(t))
-                              .toList(),
+                      children: user.workoutTypes
+                          .map((t) => _buildChip(t))
+                          .toList(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -72,10 +75,9 @@ class ProfileScreen extends ConsumerWidget {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          user.fitnessGoals
-                              .map((g) => _buildChip(g))
-                              .toList(),
+                      children: user.fitnessGoals
+                          .map((g) => _buildChip(g))
+                          .toList(),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -90,10 +92,9 @@ class ProfileScreen extends ConsumerWidget {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children:
-                              user.preferredDays
-                                  .map((d) => _buildChip(d))
-                                  .toList(),
+                          children: user.preferredDays
+                              .map((d) => _buildChip(d))
+                              .toList(),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -136,35 +137,34 @@ class ProfileScreen extends ConsumerWidget {
               ),
             );
           },
-          loading:
-              () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-          error:
-              (e, _) => Center(
-                child: Text(
-                  'Error loading profile',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
+          error: (e, _) => Center(
+            child: Text(
+              'Error loading profile',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAvatar(BuildContext context, UserModel user) {
-    final initials =
-        user.name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').take(2).join().toUpperCase();
+    final initials = user.name
+        .split(' ')
+        .map((n) => n.isNotEmpty ? n[0] : '')
+        .take(2)
+        .join()
+        .toUpperCase();
 
     return Container(
       width: 80,
       height: 80,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.7),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
         ),
         shape: BoxShape.circle,
       ),
@@ -183,7 +183,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildStatsGrid(
     BuildContext context,
-    ({int current, int best, int total}) streak,
+    StreakStats streak,
     UserModel user,
   ) {
     return Row(
@@ -252,9 +252,7 @@ class ProfileScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,
@@ -270,35 +268,32 @@ class ProfileScreen extends ConsumerWidget {
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
             ),
-            title: const Text('Logout'),
-            content: const Text('Are you sure you want to logout?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await ref.read(authRepositoryProvider).logout();
-                  if (context.mounted) context.go('/welcome');
-                },
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-            ],
           ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(authRepositoryProvider).logout();
+              if (context.mounted) context.go('/welcome');
+            },
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

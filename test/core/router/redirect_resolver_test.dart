@@ -25,6 +25,28 @@ void main() {
       expect(go('/login', authed: false), isNull);
       expect(go('/register', authed: false), isNull);
     });
+
+    test('may ask for a password reset', () {
+      // Someone who cannot sign in is by definition signed out; bouncing them
+      // to /welcome would make the feature unreachable by the only people who
+      // need it.
+      expect(go('/forgot-password', authed: false), isNull);
+    });
+  });
+
+  group('password recovery', () {
+    test('the reset screen is reachable while signed out', () {
+      // Following the emailed link puts the app in a recovery session that may
+      // not look authenticated yet, so this must not redirect either way.
+      expect(go('/reset-password', authed: false), isNull);
+    });
+
+    test('the reset screen is reachable while signed in', () {
+      // Supabase signs the user in as part of the recovery flow; they still
+      // need to reach the screen that sets the new password.
+      expect(go('/reset-password'), isNull);
+      expect(go('/reset-password', onboarded: false), isNull);
+    });
   });
 
   group('signed in but onboarding incomplete', () {

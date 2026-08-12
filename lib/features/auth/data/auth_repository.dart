@@ -2,6 +2,12 @@ import 'package:gym_streak/core/domain/app_failure.dart';
 import 'package:gym_streak/models/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// The deep link a password-recovery email opens.
+///
+/// Must match the scheme registered in `AndroidManifest.xml` and iOS
+/// `Info.plist`, and be allow-listed in the Supabase dashboard.
+const String passwordResetRedirect = 'io.supabase.gymstreak://reset-callback';
+
 class AuthRepository {
   /// The client is injected rather than read from [Supabase.instance] so this
   /// class can be constructed — and therefore tested — without a fully
@@ -76,6 +82,31 @@ class AuthRepository {
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await guardFailures(
       () => _client.from('profiles').update(data).eq('id', uid),
+    );
+  }
+
+  /// Emails a recovery link to [email].
+  ///
+  /// Succeeds even when no account exists — Supabase deliberately does not say
+  /// either way, and neither should the UI, or the screen becomes a way to test
+  /// whether an address is registered.
+  ///
+  /// [redirectTo] is the deep link the emailed button opens; it must also be
+  /// listed under Supabase → Authentication → URL Configuration → Redirect URLs,
+  /// or the link silently falls back to the project's Site URL.
+  Future<void> sendPasswordReset(String email) async {
+    await guardFailures(
+      () => _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: passwordResetRedirect,
+      ),
+    );
+  }
+
+  /// Sets a new password for the session created by following a recovery link.
+  Future<void> updatePassword(String newPassword) async {
+    await guardFailures(
+      () => _client.auth.updateUser(UserAttributes(password: newPassword)),
     );
   }
 

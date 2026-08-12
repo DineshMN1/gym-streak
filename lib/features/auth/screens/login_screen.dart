@@ -117,7 +117,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? 'Please enter your password'
                       : null,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => context.go('/forgot-password'),
+                    child: const Text(
+                      'Forgot password?',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 56,

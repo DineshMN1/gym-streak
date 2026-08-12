@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_streak/core/router/redirect_resolver.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
+import 'package:gym_streak/features/auth/screens/forgot_password_screen.dart';
 import 'package:gym_streak/features/auth/screens/login_screen.dart';
+import 'package:gym_streak/features/auth/screens/reset_password_screen.dart';
 import 'package:gym_streak/features/auth/screens/register_screen.dart';
 import 'package:gym_streak/features/auth/screens/welcome_screen.dart';
 import 'package:gym_streak/features/onboarding/screens/onboarding_screen.dart';
@@ -20,8 +22,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// triggered elsewhere) would leave the user sitting inside the app with every
 /// query failing.
 class AuthRefreshNotifier extends ChangeNotifier {
-  AuthRefreshNotifier(Stream<AuthState> stream) {
-    _subscription = stream.listen((_) => notifyListeners());
+  AuthRefreshNotifier(Stream<AuthState> stream, {void Function()? onRecovery}) {
+    _subscription = stream.listen((state) {
+      // Supabase raises this when the app is opened by a recovery deep link.
+      // It is the only signal that the user is here to set a new password
+      // rather than to use the app, so it has to drive navigation directly.
+      if (state.event == AuthChangeEvent.passwordRecovery) {
+        onRecovery?.call();
+      }
+      notifyListeners();
+    });
   }
 
   late final StreamSubscription<AuthState> _subscription;
@@ -43,6 +53,7 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final goRouterProvider = Provider<GoRouter>((ref) {
   final notifier = AuthRefreshNotifier(
     Supabase.instance.client.auth.onAuthStateChange,
+    onRecovery: () => _rootNavigatorKey.currentContext?.go(resetPasswordRoute),
   );
   ref.onDispose(notifier.dispose);
 
@@ -79,6 +90,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: resetPasswordRoute,
+        builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const AppShell()),
     ],

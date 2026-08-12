@@ -47,15 +47,24 @@ of "did my workout get recorded", and today the honest answer is "probably".
 
 ## Order of work
 
-1. **Rest-day-aware streaks** — uses data already collected, fixes the core lie
-2. **Offline-first logging** — the basement problem
-3. **Daily reminder notification** — the churn defence
-4. **Widget tap-to-log** — five actions to one
-5. **Heatmap intensity** driven by the weekly target
+All five have shipped.
 
-Items 1 and 2 should land before friends get a build. A beta that breaks streaks
-for resting on schedule, and silently drops workouts when signal is poor, teaches
-you nothing except that people stopped opening it.
+1. ~~Rest-day-aware streaks~~ — done
+2. ~~Offline-first logging~~ — done
+3. ~~Reminder notifications~~ — done, opt-in and plan-aware
+4. ~~Widget tap-to-log~~ — done; opens the picker rather than logging blind
+5. ~~Heatmap intensity~~ — done, driven by the weekly target
+
+### What is next
+
+- **Undo a check-in.** `removeWorkout` still has no caller, so a mis-tapped
+  workout type cannot be corrected.
+- **Bound the log stream.** `workoutLogsStream` still subscribes to every
+  workout ever logged.
+- **Midnight rollover.** Nothing invalidates the providers at local midnight, so
+  a screen left open overnight shows yesterday.
+- **Repository tests beyond construction**, via a fake HTTP layer.
+- **Email confirmation back on**, with the "check your inbox" screen it needs.
 
 ## Architecture
 

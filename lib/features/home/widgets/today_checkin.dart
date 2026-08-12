@@ -116,93 +116,100 @@ class TodayCheckin extends ConsumerWidget {
     );
   }
 
-  void _showWorkoutTypeSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+  void _showWorkoutTypeSheet(BuildContext context, WidgetRef ref) =>
+      showWorkoutTypeSheet(context, ref);
+}
+
+/// Opens the "what did you do today?" sheet.
+///
+/// Top-level so the home-screen widget can open it directly — that is what
+/// takes logging from five actions to two.
+void showWorkoutTypeSheet(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              'What did you do today?',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: WorkoutType.values.map((type) {
-                final icon = AppConstants.iconFor(type);
-                return GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final messenger = ScaffoldMessenger.of(context);
-                    final uid = Supabase.instance.client.auth.currentUser?.id;
-                    if (uid == null) return;
-                    try {
-                      await ref
-                          .read(workoutRepositoryProvider)
-                          .logWorkout(uid: uid, workoutType: type);
-                      // Picks up a workout that went to the offline queue
-                      // instead of reaching the server.
-                      ref.invalidate(pendingWorkoutsProvider);
-                    } catch (e) {
-                      // Only reached for failures that are not simply being
-                      // offline — those are queued rather than thrown.
-                      messenger.showSnackBar(
-                        SnackBar(content: Text(AppFailure.from(e).message)),
-                      );
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icon, size: 20, color: AppColors.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          type.label,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'What did you do today?',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: WorkoutType.values.map((type) {
+              final icon = AppConstants.iconFor(type);
+              return GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  final uid = Supabase.instance.client.auth.currentUser?.id;
+                  if (uid == null) return;
+                  try {
+                    await ref
+                        .read(workoutRepositoryProvider)
+                        .logWorkout(uid: uid, workoutType: type);
+                    // Picks up a workout that went to the offline queue
+                    // instead of reaching the server.
+                    ref.invalidate(pendingWorkoutsProvider);
+                  } catch (e) {
+                    // Only reached for failures that are not simply being
+                    // offline — those are queued rather than thrown.
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(AppFailure.from(e).message)),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 20, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        type.label,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }

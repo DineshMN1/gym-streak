@@ -3,7 +3,9 @@ package com.gymstreak.gym_streak
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.net.Uri
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 
 /**
@@ -36,6 +38,19 @@ class StreakWidgetProvider : AppWidgetProvider() {
                     if (current == 1) "day streak" else "days streak"
                 )
                 setTextViewText(R.id.streak_best, "Best $best")
+
+                // Tapping opens the app straight at the workout picker.
+                // Deliberately not a background write: choosing the workout
+                // type needs the user, and a background isolate that fails
+                // silently is worse than one extra tap.
+                setOnClickPendingIntent(
+                    R.id.streak_widget_root,
+                    HomeWidgetLaunchIntent.getActivity(
+                        context,
+                        MainActivity::class.java,
+                        Uri.parse("gymstreak://log"),
+                    ),
+                )
             }
             appWidgetManager.updateAppWidget(widgetId, views)
         }

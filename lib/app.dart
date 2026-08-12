@@ -4,6 +4,8 @@ import 'package:gym_streak/core/router/app_router.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/features/home/providers/workout_provider.dart';
 import 'package:gym_streak/features/home/widgets/streak_home_widget.dart';
+import 'package:gym_streak/features/home/widgets/today_checkin.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class GymStreakApp extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class _GymStreakAppState extends ConsumerState<GymStreakApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _flushPendingWorkouts();
+    _listenForWidgetTaps();
   }
 
   @override
@@ -33,6 +36,24 @@ class _GymStreakAppState extends ConsumerState<GymStreakApp>
     // Coming back to the foreground is the most reliable moment to discover
     // the network has returned — the user has usually walked out of the gym.
     if (state == AppLifecycleState.resumed) _flushPendingWorkouts();
+  }
+
+  /// Opens the workout picker when the home-screen widget is tapped, whether
+  /// the app was already running or was launched by the tap.
+  Future<void> _listenForWidgetTaps() async {
+    HomeWidget.widgetClicked.listen((_) => _openWorkoutPicker());
+    final launchUri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+    if (launchUri != null) _openWorkoutPicker();
+  }
+
+  void _openWorkoutPicker() {
+    // Deferred a frame: on a cold launch the navigator does not exist yet when
+    // the launch intent arrives.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = rootNavigatorKey.currentContext;
+      if (context == null || !context.mounted) return;
+      showWorkoutTypeSheet(context, ref);
+    });
   }
 
   Future<void> _flushPendingWorkouts() async {

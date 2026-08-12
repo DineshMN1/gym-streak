@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
+import 'package:gym_streak/core/domain/calendar_date.dart';
+import 'package:gym_streak/features/auth/providers/auth_provider.dart';
+import 'package:gym_streak/features/home/heatmap_intensity.dart';
 import 'package:gym_streak/features/home/providers/workout_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -13,11 +16,13 @@ class ContributionHeatmap extends ConsumerWidget {
 
     return logsAsync.when(
       data: (logs) {
-        final workoutDates = <String>{};
-        for (final log in logs) {
-          workoutDates.add(log.date.toIso());
-        }
-        return _HeatmapGrid(workoutDates: workoutDates);
+        final workoutDays = logs.map((log) => log.date).toSet();
+        final profile = ref.watch(currentUserProfileProvider).valueOrNull;
+        return _HeatmapGrid(
+          workoutDates: workoutDays.map((d) => d.toIso()).toSet(),
+          weeklyCounts: countWorkoutsPerWeek(workoutDays),
+          weeklyTarget: profile?.workoutsPerWeek ?? 0,
+        );
       },
       loading: () => Container(
         height: 140,
@@ -36,8 +41,14 @@ class ContributionHeatmap extends ConsumerWidget {
 
 class _HeatmapGrid extends StatelessWidget {
   final Set<String> workoutDates;
+  final Map<CalendarDate, int> weeklyCounts;
+  final int weeklyTarget;
 
-  const _HeatmapGrid({required this.workoutDates});
+  const _HeatmapGrid({
+    required this.workoutDates,
+    required this.weeklyCounts,
+    required this.weeklyTarget,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -174,13 +185,21 @@ class _HeatmapGrid extends StatelessWidget {
                         // Cells for each week
                         ...List.generate(weeks.length, (weekIdx) {
                           final date = weeks[weekIdx][dayIndex];
+                          final day = date == null
+                              ? null
+                              : CalendarDate.fromDateTime(date);
+                          final trained =
+                              day != null && workoutDates.contains(day.toIso());
                           return _HeatmapCell(
                             date: date,
-                            isActive:
-                                date != null &&
-                                workoutDates.contains(
-                                  DateFormat('yyyy-MM-dd').format(date),
-                                ),
+                            level: day == null
+                                ? 0
+                                : heatmapLevelFor(
+                                    trained: trained,
+                                    workoutsThatWeek:
+                                        weeklyCounts[weekStartOf(day)] ?? 0,
+                                    weeklyTarget: weeklyTarget,
+                                  ),
                             cellSize: cellSize,
                             cellGap: cellGap,
                           );
@@ -203,7 +222,9 @@ class _HeatmapGrid extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               _LegendCell(color: AppColors.heatmapEmpty),
+              _LegendCell(color: AppColors.heatmapLevel1),
               _LegendCell(color: AppColors.heatmapLevel2),
+              _LegendCell(color: AppColors.heatmapLevel3),
               _LegendCell(color: AppColors.heatmapLevel4),
               const SizedBox(width: 4),
               Text(
@@ -223,15 +244,24 @@ class _HeatmapGrid extends StatelessWidget {
   }
 }
 
+/// Colour per intensity level; index 0 is an untrained day.
+const List<Color> _levelColors = [
+  AppColors.heatmapEmpty,
+  AppColors.heatmapLevel1,
+  AppColors.heatmapLevel2,
+  AppColors.heatmapLevel3,
+  AppColors.heatmapLevel4,
+];
+
 class _HeatmapCell extends StatelessWidget {
   final DateTime? date;
-  final bool isActive;
+  final int level;
   final double cellSize;
   final double cellGap;
 
   const _HeatmapCell({
     required this.date,
-    required this.isActive,
+    required this.level,
     required this.cellSize,
     required this.cellGap,
   });
@@ -241,18 +271,17 @@ class _HeatmapCell extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(cellGap / 2),
       child: Tooltip(
+        // Tooltip doubles as the semantics label, so this is what a screen
+        // reader announces for the cell.
         message: date != null
-            ? '${DateFormat('MMM d, yyyy').format(date!)}${isActive ? ' - Worked out!' : ''}'
+            ? '${DateFormat('MMM d, yyyy').format(date!)}'
+                  '${level > 0 ? ' - Worked out!' : ''}'
             : '',
         child: Container(
           width: cellSize,
           height: cellSize,
           decoration: BoxDecoration(
-            color: date == null
-                ? Colors.transparent
-                : isActive
-                ? AppColors.heatmapLevel4
-                : AppColors.heatmapEmpty,
+            color: date == null ? Colors.transparent : _levelColors[level],
             borderRadius: BorderRadius.circular(2.5),
           ),
         ),

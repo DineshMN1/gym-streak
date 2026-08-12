@@ -43,7 +43,9 @@ class AuthRefreshNotifier extends ChangeNotifier {
   }
 }
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+/// Exposed so code outside the router — the home-screen widget handler —
+/// can reach a navigator context.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// The app's router.
 ///
@@ -53,12 +55,12 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final goRouterProvider = Provider<GoRouter>((ref) {
   final notifier = AuthRefreshNotifier(
     Supabase.instance.client.auth.onAuthStateChange,
-    onRecovery: () => _rootNavigatorKey.currentContext?.go(resetPasswordRoute),
+    onRecovery: () => rootNavigatorKey.currentContext?.go(resetPasswordRoute),
   );
   ref.onDispose(notifier.dispose);
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: notifier,
     redirect: (context, state) {

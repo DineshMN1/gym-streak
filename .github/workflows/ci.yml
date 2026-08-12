@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch makes the in-flight run irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.38.7
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # This run is the entire reason CI exists for this project.
+      #
+      # The streak engine had a bug where two calendar days either side of a
+      # daylight-saving spring-forward are 23 hours apart, and
+      # Duration(hours: 23).inDays is 0 — so an unbroken streak silently broke
+      # once a year. The regression tests that guard it are INERT in a timezone
+      # without DST: under UTC (this runner's default) and under IST (the
+      # author's machine) the old buggy implementation passes them too.
+      #
+      # Only this run can fail if the bug comes back. Do not remove it.
+      - name: Test under a daylight-saving timezone
+        env:
+          TZ: America/Los_Angeles
+        run: flutter test

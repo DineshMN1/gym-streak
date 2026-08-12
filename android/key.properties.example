@@ -1,0 +1,15 @@
+# Copy to android/key.properties and fill in. That file is gitignored.
+#
+# Generate the keystore first:
+#
+#   keytool -genkey -v -keystore ~/gym-streak-release.jks \
+#           -keyalg RSA -keysize 2048 -validity 10000 -alias gym-streak
+#
+# Keep the .jks OUT of the repository and back it up somewhere you will still
+# have in two years. If you lose it you cannot ship an update to anyone who has
+# already installed the app.
+
+storeFile=/Users/YOU/gym-streak-release.jks
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyAlias=gym-streak
+keyPassword=YOUR_KEY_PASSWORD

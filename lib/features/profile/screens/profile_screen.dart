@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_streak/core/streak/streak_stats.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
+import 'package:gym_streak/features/reminders/reminder_provider.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
 import 'package:gym_streak/features/home/providers/workout_provider.dart';
 import 'package:gym_streak/models/user_model.dart';
@@ -43,6 +44,9 @@ class ProfileScreen extends ConsumerWidget {
 
                   // Stats grid
                   _buildStatsGrid(context, streak, user),
+                  const SizedBox(height: 24),
+
+                  _buildReminderToggle(context, ref, user),
                   const SizedBox(height: 24),
 
                   // Preferences
@@ -293,6 +297,50 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Reminders follow the training plan, so the copy says which days.
+  Widget _buildReminderToggle(
+    BuildContext context,
+    WidgetRef ref,
+    UserModel user,
+  ) {
+    final enabled = ref.watch(remindersEnabledProvider).valueOrNull ?? false;
+    final days = user.preferredDays.isEmpty
+        ? 'every day'
+        : user.preferredDays.map((d) => d.label).join(', ');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: enabled,
+        activeThumbColor: AppColors.primary,
+        title: const Text('Workout reminders'),
+        subtitle: Text(
+          enabled ? 'At 6pm on $days' : 'Off',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        secondary: const Icon(
+          Icons.notifications_active_rounded,
+          color: AppColors.primary,
+        ),
+        onChanged: (value) async {
+          await ref
+              .read(reminderServiceProvider)
+              .setEnabled(
+                enabled: value,
+                scheduledDays: user.preferredDays.toSet(),
+              );
+          ref.invalidate(remindersEnabledProvider);
+        },
       ),
     );
   }

@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required from Android 13 (API 33); reminders are opt-in and the
+         permission is requested only when the user turns them on. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="gym_streak"
         android:name="${applicationName}"

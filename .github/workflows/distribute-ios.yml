@@ -1,0 +1,134 @@
+name: Distribute iOS
+
+# Nothing here runs until you have an Apple Developer Program membership and
+# the six APPLE_*/APP_STORE_* secrets below. See docs/distribution.md.
+#
+# TestFlight rather than Firebase App Distribution: Firebase needs an ad-hoc
+# provisioning profile listing every tester's device UDID, which means
+# collecting UDIDs and rebuilding whenever someone new joins. TestFlight needs
+# none of that, and internal testers skip review entirely.
+#
+# Unlike the Android workflow there is no release-notes input: TestFlight's
+# "What to Test" is edited in App Store Connect after the build finishes
+# processing, not supplied at upload time.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: distribute-ios
+  cancel-in-progress: false
+
+jobs:
+  distribute:
+    name: Build and upload to TestFlight
+    # macOS runners bill at 10x the Linux rate on private repos. That is why
+    # this workflow is manual and does not run the test suite — ci.yml already
+    # covers that on Linux, and duplicating it here is pure cost.
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.38.7
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Import signing certificate and provisioning profile
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CERTIFICATE_BASE64" ] || [ -z "$PROVISIONING_PROFILE_BASE64" ]; then
+            echo "::error::Apple signing secrets are missing. See docs/distribution.md."
+            exit 1
+          fi
+
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          # Ephemeral: this keychain exists only for the life of the runner.
+          KEYCHAIN_PASSWORD=$(uuidgen)
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" > /dev/null
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Write export options
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TEAM_ID" ]; then
+            echo "::error::APPLE_TEAM_ID is not set."
+            exit 1
+          fi
+          # Generated rather than committed so the team ID stays out of git.
+          cat > ios/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${TEAM_ID}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingStyle</key>
+            <string>manual</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Write Supabase credentials
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Supabase secrets missing. The app would boot into the configuration screen."
+            exit 1
+          fi
+          jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_ANON_KEY" \
+            '{SUPABASE_URL: $url, SUPABASE_ANON_KEY: $key}' > env.json
+
+      - name: Build signed IPA
+        run: |
+          flutter build ipa --release \
+            --dart-define-from-file=env.json \
+            --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload to TestFlight
+        uses: apple-actions/upload-testflight-build@v3
+        with:
+          app-path: build/ios/ipa/gym_streak.ipa
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+
+      - name: Remove credentials from the workspace
+        if: always()
+        run: |
+          rm -f env.json ios/ExportOptions.plist
+          rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/profile.mobileprovision"
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true

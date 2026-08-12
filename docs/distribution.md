@@ -102,6 +102,65 @@ because of the point above. Among a few trusted friends this is survivable;
 beyond that it is not. Turning it back on needs a "check your inbox" screen and
 deep-link handling, neither of which exists yet.
 
+## iOS (TestFlight)
+
+`.github/workflows/distribute-ios.yml` is written and will not run until you
+have an Apple Developer Program membership. This is not a configuration gap —
+signing certificates are issued against your enrolled identity, so there is no
+way to produce a distributable iOS build without one.
+
+**Why TestFlight and not Firebase App Distribution:** Firebase needs an ad-hoc
+provisioning profile listing every tester's device UDID, so you collect UDIDs
+and rebuild whenever someone joins. TestFlight needs none of that, and internal
+testers skip review.
+
+### One-time setup
+
+1. **Enrol** in the Apple Developer Program ($99/yr) — <https://developer.apple.com/programs/>
+2. **Create the App Store Connect record** using bundle ID
+   `com.gymstreak.gymStreak`. See the note below before you do this.
+3. **Distribution certificate** — Certificates, IDs & Profiles → create an
+   Apple Distribution certificate, download it, and export it from Keychain
+   Access as a `.p12` with a password.
+4. **Provisioning profile** — create an App Store profile for that bundle ID and
+   download it.
+5. **App Store Connect API key** — Users and Access → Integrations → App Store
+   Connect API → generate a key with the App Manager role. Download the `.p8`;
+   it is only offered once.
+
+### Secrets
+
+| Secret | Value |
+|---|---|
+| `APPLE_CERTIFICATE_BASE64` | `base64 -i dist.p12 \| pbcopy` |
+| `APPLE_CERTIFICATE_PASSWORD` | The `.p12` export password |
+| `APPLE_PROVISIONING_PROFILE_BASE64` | `base64 -i profile.mobileprovision \| pbcopy` |
+| `APPLE_TEAM_ID` | Ten characters, from the developer portal |
+| `APP_STORE_CONNECT_ISSUER_ID` | UUID from the API keys page |
+| `APP_STORE_CONNECT_KEY_ID` | The key's ID |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | Full contents of the `.p8` file |
+
+`SUPABASE_URL` and `SUPABASE_ANON_KEY` are shared with the Android workflow.
+
+### About the bundle identifier
+
+iOS is `com.gymstreak.gymStreak`; Android is `com.gymstreak.gym_streak`.
+
+**These do not need to match** — Apple and Google are separate namespaces and
+each platform is registered independently. What matters is that the iOS one is
+chosen deliberately *before* the App Store Connect record exists, because it
+cannot be changed afterwards.
+
+The only thing worth a second thought is the camelCase `gymStreak`. It is legal
+and works, just unconventional. If you want it lowercase, change it in Xcode
+now — not after step 2.
+
+### Cost note
+
+macOS runners bill at **10x** the Linux rate on private repositories. That is
+why this workflow is manual and skips the test suite: `ci.yml` already runs the
+tests on Linux, and repeating them on macOS would burn quota for nothing.
+
 ## Why CI runs the test suite twice
 
 `ci.yml` runs `flutter test` and then runs it again under

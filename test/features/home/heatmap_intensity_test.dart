@@ -14,8 +14,11 @@ void main() {
     });
 
     test('rises with progress towards the target', () {
-      int level(int done) =>
-          heatmapLevelFor(trained: true, workoutsThatWeek: done, weeklyTarget: 4);
+      int level(int done) => heatmapLevelFor(
+        trained: true,
+        workoutsThatWeek: done,
+        weeklyTarget: 4,
+      );
       expect(level(1), 1, reason: 'a quarter of the way');
       expect(level(2), 2, reason: 'halfway');
       expect(level(4), 4, reason: 'target met');

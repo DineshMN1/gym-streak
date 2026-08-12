@@ -108,10 +108,10 @@ void main() {
         [log('2026-08-11', WorkoutType.strength)],
         [PendingWorkout(date: d('2026-08-12'), workoutType: WorkoutType.yoga)],
       );
-      expect(merged.map((l) => l.date.toIso()), containsAll(<String>[
-        '2026-08-11',
-        '2026-08-12',
-      ]));
+      expect(
+        merged.map((l) => l.date.toIso()),
+        containsAll(<String>['2026-08-11', '2026-08-12']),
+      );
     });
 
     test('lets a pending workout win over a stale remote row', () {
@@ -130,7 +130,10 @@ void main() {
         [log('2026-08-10', WorkoutType.strength)],
         [
           PendingWorkout(date: d('2026-08-12'), workoutType: WorkoutType.yoga),
-          PendingWorkout(date: d('2026-08-11'), workoutType: WorkoutType.cardio),
+          PendingWorkout(
+            date: d('2026-08-11'),
+            workoutType: WorkoutType.cardio,
+          ),
         ],
       );
       expect(merged.map((l) => l.date.toIso()).toList(), [

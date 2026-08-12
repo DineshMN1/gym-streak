@@ -72,10 +72,10 @@ void main() {
 
   group('reminderDaysFor', () {
     test('uses the training plan when there is one', () {
-      expect(
-        reminderDaysFor({Weekday.monday, Weekday.thursday}),
-        {Weekday.monday, Weekday.thursday},
-      );
+      expect(reminderDaysFor({Weekday.monday, Weekday.thursday}), {
+        Weekday.monday,
+        Weekday.thursday,
+      });
     });
 
     test('falls back to every day when no plan was chosen', () {

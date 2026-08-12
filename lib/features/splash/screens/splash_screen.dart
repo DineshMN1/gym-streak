@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
+import 'package:gym_streak/models/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -14,6 +15,11 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  /// Long enough for the entrance animation to read as deliberate,
+  /// short enough not to tax a daily user. The animation itself
+  /// completes at roughly 1.8s; this is the floor, not a wait.
+  static const Duration _minimumSplash = Duration(milliseconds: 900);
+
   @override
   void initState() {
     super.initState();
@@ -21,30 +27,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _navigateAfterSplash() async {
-    // Wait for animations to play
-    await Future.delayed(const Duration(milliseconds: 2800));
-
-    if (!mounted) return;
-
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) {
+      // Nothing to fetch; just let the animation land.
+      await Future.delayed(_minimumSplash);
+      if (!mounted) return;
       context.go('/welcome');
       return;
     }
 
-    // Check onboarding status
-    final profile = await ref
+    // Start the fetch immediately and let it run *alongside* the animation.
+    // Previously the app waited out a fixed 2.8s and only then began the
+    // request, so time-to-content was the delay plus a full round trip on
+    // every single launch.
+    final profileFuture = ref
         .read(authRepositoryProvider)
         .getUserProfile(user.id);
+    final results = await Future.wait([
+      profileFuture,
+      Future<void>.delayed(_minimumSplash),
+    ]);
 
     if (!mounted) return;
 
-    if (profile == null || !profile.onboardingComplete) {
-      context.go('/onboarding');
-    } else {
-      context.go('/home');
-    }
+    final profile = results.first as UserModel?;
+    context.go(
+      profile == null || !profile.onboardingComplete ? '/onboarding' : '/home',
+    );
   }
 
   @override

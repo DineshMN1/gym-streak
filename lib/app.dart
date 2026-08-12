@@ -12,7 +12,7 @@ class GymStreakApp extends ConsumerWidget {
       title: 'Gym Streak',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      routerConfig: AppRouter.router,
+      routerConfig: ref.watch(goRouterProvider),
     );
   }
 }

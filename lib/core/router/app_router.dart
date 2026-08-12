@@ -20,7 +20,8 @@ class AppRouter {
 
       final user = Supabase.instance.client.auth.currentUser;
       final isAuthenticated = user != null;
-      final isAuthRoute = state.matchedLocation == '/welcome' ||
+      final isAuthRoute =
+          state.matchedLocation == '/welcome' ||
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
 
@@ -43,10 +44,7 @@ class AppRouter {
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
@@ -55,10 +53,7 @@ class AppRouter {
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const AppShell(),
-      ),
+      GoRoute(path: '/home', builder: (context, state) => const AppShell()),
     ],
   );
 }

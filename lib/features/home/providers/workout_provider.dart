@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gym_streak/core/domain/calendar_date.dart';
 import 'package:gym_streak/core/streak/streak_engine.dart';
 import 'package:gym_streak/core/streak/streak_stats.dart';
 import 'package:gym_streak/features/home/data/workout_repository.dart';
@@ -27,7 +28,7 @@ final streakDataProvider = Provider<StreakStats>((ref) {
   return logsAsync.maybeWhen(
     data: (logs) => StreakEngine.calculate(
       dates: logs.map((log) => log.date),
-      today: DateTime.now(),
+      today: CalendarDate.today(),
     ),
     orElse: () => StreakStats.empty,
   );

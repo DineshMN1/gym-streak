@@ -1,3 +1,5 @@
+import 'package:gym_streak/core/domain/calendar_date.dart';
+import 'package:gym_streak/core/domain/workout_type.dart';
 import 'package:gym_streak/models/workout_log.dart';
 import 'package:intl/intl.dart';
 
@@ -18,9 +20,12 @@ String isoDaysAgo(int days, {DateTime? from}) {
   return _isoDate.format(base);
 }
 
-WorkoutLog workoutLog(String isoDate, {String type = 'Strength'}) {
+WorkoutLog workoutLog(
+  String isoDate, {
+  WorkoutType type = WorkoutType.strength,
+}) {
   return WorkoutLog(
-    date: isoDate,
+    date: CalendarDate.tryParse(isoDate)!,
     workoutType: type,
     completedAt: DateTime.parse('${isoDate}T12:00:00Z'),
   );

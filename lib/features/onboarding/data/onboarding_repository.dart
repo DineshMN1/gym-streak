@@ -1,3 +1,8 @@
+import 'package:gym_streak/core/domain/experience_level.dart';
+import 'package:gym_streak/core/domain/fitness_goal.dart';
+import 'package:gym_streak/core/domain/weekday.dart';
+import 'package:gym_streak/core/domain/wire_enum.dart';
+import 'package:gym_streak/core/domain/workout_type.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnboardingRepository {
@@ -5,10 +10,10 @@ class OnboardingRepository {
 
   Future<void> saveOnboardingData({
     required String uid,
-    required String experienceLevel,
-    required List<String> workoutTypes,
-    required List<String> fitnessGoals,
-    required List<String> preferredDays,
+    required ExperienceLevel experienceLevel,
+    required List<WorkoutType> workoutTypes,
+    required List<FitnessGoal> fitnessGoals,
+    required List<Weekday> preferredDays,
     required int workoutsPerWeek,
   }) async {
     // `.select()` is load-bearing, not decoration. A Postgres UPDATE that
@@ -19,10 +24,10 @@ class OnboardingRepository {
     final rows = await _client
         .from('profiles')
         .update({
-          'experience_level': experienceLevel,
-          'workout_types': workoutTypes,
-          'fitness_goals': fitnessGoals,
-          'preferred_days': preferredDays,
+          'experience_level': experienceLevel.wire,
+          'workout_types': encodeWireList(workoutTypes),
+          'fitness_goals': encodeWireList(fitnessGoals),
+          'preferred_days': encodeWireList(preferredDays),
           'workouts_per_week': workoutsPerWeek,
           'onboarding_complete': true,
         })

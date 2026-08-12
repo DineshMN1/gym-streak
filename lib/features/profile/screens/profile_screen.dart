@@ -50,7 +50,7 @@ class ProfileScreen extends ConsumerWidget {
                     context,
                     title: 'Experience Level',
                     icon: Icons.trending_up_rounded,
-                    child: _buildChip(user.experienceLevel),
+                    child: _buildChip(user.experienceLevel?.label ?? 'Not set'),
                   ),
                   const SizedBox(height: 16),
 
@@ -62,7 +62,7 @@ class ProfileScreen extends ConsumerWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: user.workoutTypes
-                          .map((t) => _buildChip(t))
+                          .map((t) => _buildChip(t.label))
                           .toList(),
                     ),
                   ),
@@ -76,7 +76,7 @@ class ProfileScreen extends ConsumerWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: user.fitnessGoals
-                          .map((g) => _buildChip(g))
+                          .map((g) => _buildChip(g.label))
                           .toList(),
                     ),
                   ),
@@ -93,7 +93,7 @@ class ProfileScreen extends ConsumerWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: user.preferredDays
-                              .map((d) => _buildChip(d))
+                              .map((d) => _buildChip(d.label))
                               .toList(),
                         ),
                         const SizedBox(height: 8),

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_streak/core/constants/app_constants.dart';
+import 'package:gym_streak/core/domain/experience_level.dart';
+import 'package:gym_streak/core/domain/fitness_goal.dart';
+import 'package:gym_streak/core/domain/weekday.dart';
+import 'package:gym_streak/core/domain/workout_type.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/core/widgets/loading_overlay.dart';
 import 'package:gym_streak/features/onboarding/providers/onboarding_provider.dart';
@@ -20,22 +24,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _isLoading = false;
 
   // Step 1
-  String _experienceLevel = '';
+  ExperienceLevel? _experienceLevel;
 
   // Step 2
-  final Set<String> _selectedWorkoutTypes = {};
+  final Set<WorkoutType> _selectedWorkoutTypes = {};
 
   // Step 3
-  final Set<String> _selectedGoals = {};
+  final Set<FitnessGoal> _selectedGoals = {};
 
   // Step 4
-  final Set<String> _selectedDays = {};
+  final Set<Weekday> _selectedDays = {};
   int _workoutsPerWeek = 3;
 
   bool get _canProceed {
     switch (_currentPage) {
       case 0:
-        return _experienceLevel.isNotEmpty;
+        return _experienceLevel != null;
       case 1:
         return _selectedWorkoutTypes.isNotEmpty;
       case 2:
@@ -60,18 +64,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _saveOnboarding() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (uid == null) return;
+    final level = _experienceLevel;
+    if (uid == null || level == null) return;
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(onboardingRepositoryProvider).saveOnboardingData(
-        uid: uid,
-        experienceLevel: _experienceLevel,
-        workoutTypes: _selectedWorkoutTypes.toList(),
-        fitnessGoals: _selectedGoals.toList(),
-        preferredDays: _selectedDays.toList(),
-        workoutsPerWeek: _workoutsPerWeek,
-      );
+      await ref
+          .read(onboardingRepositoryProvider)
+          .saveOnboardingData(
+            uid: uid,
+            experienceLevel: level,
+            workoutTypes: _selectedWorkoutTypes.toList(),
+            fitnessGoals: _selectedGoals.toList(),
+            preferredDays: _selectedDays.toList(),
+            workoutsPerWeek: _workoutsPerWeek,
+          );
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
@@ -109,10 +116,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(2),
-                          color:
-                              index <= _currentPage
-                                  ? AppColors.primary
-                                  : AppColors.secondary,
+                          color: index <= _currentPage
+                              ? AppColors.primary
+                              : AppColors.secondary,
                         ),
                       ),
                     );
@@ -207,7 +213,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 32),
-          ...AppConstants.experienceLevels.map((level) {
+          ...ExperienceLevel.values.map((level) {
             final isSelected = _experienceLevel == level;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -217,7 +223,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surface,
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected ? AppColors.primary : AppColors.border,
@@ -228,10 +236,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: [
                       Icon(
                         _experienceIcon(level),
-                        color:
-                            isSelected
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                         size: 28,
                       ),
                       const SizedBox(width: 16),
@@ -240,14 +247,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              level,
+                              level.label,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color:
-                                    isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textPrimary,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -298,93 +304,80 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             childAspectRatio: 2.4,
-            children:
-                AppConstants.workoutTypes.map((type) {
-                  final isSelected = _selectedWorkoutTypes.contains(type);
-                  final icon =
-                      AppConstants.workoutIcons[type] ??
-                      Icons.sports_rounded;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedWorkoutTypes.remove(type);
-                        } else {
-                          _selectedWorkoutTypes.add(type);
-                        }
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppColors.primary.withValues(alpha: 0.12)
-                                : AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                          width: isSelected ? 2 : 1,
+            children: WorkoutType.values.map((type) {
+              final isSelected = _selectedWorkoutTypes.contains(type);
+              final icon = AppConstants.iconFor(type);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedWorkoutTypes.remove(type);
+                    } else {
+                      _selectedWorkoutTypes.add(type);
+                    }
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.2)
+                              : AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          icon,
+                          size: 22,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 14),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withValues(
-                                        alpha: 0.2,
-                                      )
-                                      : AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              icon,
-                              size: 22,
-                              color:
-                                  isSelected
-                                      ? AppColors.primary
-                                      : AppColors.textSecondary,
-                            ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          type.label,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              type,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                color:
-                                    isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 12),
-                              child: Icon(
-                                Icons.check_circle_rounded,
-                                size: 20,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                      if (isSelected)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 12),
+                          child: Icon(
+                            Icons.check_circle_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -411,56 +404,49 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children:
-                AppConstants.fitnessGoals.map((goal) {
-                  final isSelected = _selectedGoals.contains(goal);
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedGoals.remove(goal);
-                        } else {
-                          _selectedGoals.add(goal);
-                        }
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppColors.primary.withValues(alpha: 0.15)
-                                : AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Text(
-                        goal,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight:
-                              isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
-                        ),
-                      ),
+            children: FitnessGoal.values.map((goal) {
+              final isSelected = _selectedGoals.contains(goal);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedGoals.remove(goal);
+                    } else {
+                      _selectedGoals.add(goal);
+                    }
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.15)
+                        : AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: isSelected ? 2 : 1,
                     ),
-                  );
-                }).toList(),
+                  ),
+                  child: Text(
+                    goal.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -487,52 +473,44 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           // Day selector
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children:
-                AppConstants.weekDays.map((day) {
-                  final isSelected = _selectedDays.contains(day);
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedDays.remove(day);
-                        } else {
-                          _selectedDays.add(day);
-                        }
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 44,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppColors.primary
-                                : AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isSelected
-                                    ? AppColors.background
-                                    : AppColors.textSecondary,
-                          ),
-                        ),
+            children: Weekday.values.map((day) {
+              final isSelected = _selectedDays.contains(day);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedDays.remove(day);
+                    } else {
+                      _selectedDays.add(day);
+                    }
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 44,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      day.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? AppColors.background
+                            : AppColors.textSecondary,
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 40),
           // Workouts per week
@@ -545,16 +523,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             children: [
               Text(
                 '$_workoutsPerWeek',
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: AppColors.primary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.displayMedium?.copyWith(color: AppColors.primary),
               ),
               const SizedBox(width: 8),
               Text(
                 'days',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -589,29 +567,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  IconData _experienceIcon(String level) {
+  IconData _experienceIcon(ExperienceLevel level) {
     switch (level) {
-      case 'Beginner':
+      case ExperienceLevel.beginner:
         return Icons.eco_rounded;
-      case 'Intermediate':
+      case ExperienceLevel.intermediate:
         return Icons.fitness_center_rounded;
-      case 'Advanced':
+      case ExperienceLevel.advanced:
         return Icons.bolt_rounded;
-      default:
-        return Icons.circle;
     }
   }
 
-  String _experienceDescription(String level) {
+  String _experienceDescription(ExperienceLevel level) {
     switch (level) {
-      case 'Beginner':
+      case ExperienceLevel.beginner:
         return 'New to fitness or getting back into it';
-      case 'Intermediate':
+      case ExperienceLevel.intermediate:
         return 'Consistent gym-goer, comfortable with exercises';
-      case 'Advanced':
+      case ExperienceLevel.advanced:
         return 'Experienced athlete with specific training goals';
-      default:
-        return '';
     }
   }
 }

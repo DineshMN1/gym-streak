@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gym_streak/core/domain/calendar_date.dart';
 import 'package:gym_streak/core/streak/streak_engine.dart';
 import 'package:gym_streak/core/streak/streak_stats.dart';
 
+CalendarDate d(String iso) => CalendarDate.tryParse(iso)!;
+
 void main() {
   // A fixed "today" keeps every case deterministic.
-  final today = DateTime(2026, 8, 12);
+  final today = d('2026-08-12');
 
   StreakStats calc(List<String> dates) =>
-      StreakEngine.calculate(dates: dates, today: today);
+      StreakEngine.calculate(dates: dates.map(d), today: today);
 
   group('StreakEngine.calculate', () {
     test('returns empty for no dates', () {
@@ -79,60 +82,27 @@ void main() {
       );
     });
 
-    test('ignores unparseable rows', () {
-      expect(
-        calc(['not-a-date', 'garbage', '', '2026-08-12']),
-        const StreakStats(current: 1, best: 1, total: 1),
-      );
-    });
-
-    test('accepts full timestamps as well as bare dates', () {
-      expect(
-        calc(['2026-08-12T10:30:00', '2026-08-11']),
-        const StreakStats(current: 2, best: 2, total: 2),
-      );
-    });
-
     test('survives a daylight-saving spring-forward', () {
       // REGRESSION GUARD. US spring-forward is 2026-03-08 02:00, so the
-      // 08->09 gap is 23 local hours. The previous implementation used
-      // local DateTime.difference().inDays, read that as 0, and reported 2.
-      // Run this file under TZ=America/Los_Angeles to exercise it for real.
-      final stats = StreakEngine.calculate(
-        dates: ['2026-03-08', '2026-03-09', '2026-03-10'],
-        today: DateTime(2026, 3, 10),
+      // 08->09 gap is 23 local hours. An implementation using local
+      // DateTime.difference().inDays reads that as 0 and reports 2.
+      // Run under TZ=America/Los_Angeles to exercise it for real.
+      expect(
+        StreakEngine.calculate(
+          dates: ['2026-03-08', '2026-03-09', '2026-03-10'].map(d),
+          today: d('2026-03-10'),
+        ),
+        const StreakStats(current: 3, best: 3, total: 3),
       );
-      expect(stats, const StreakStats(current: 3, best: 3, total: 3));
     });
 
     test('survives a daylight-saving fall-back', () {
-      final stats = StreakEngine.calculate(
-        dates: ['2026-11-01', '2026-11-02', '2026-11-03'],
-        today: DateTime(2026, 11, 3),
-      );
-      expect(stats, const StreakStats(current: 3, best: 3, total: 3));
-    });
-  });
-
-  group('StreakEngine day arithmetic', () {
-    test('consecutive dates are exactly one epoch day apart across DST', () {
       expect(
-        StreakEngine.tryEpochDayOf('2026-03-09')! -
-            StreakEngine.tryEpochDayOf('2026-03-08')!,
-        1,
-      );
-    });
-
-    test('tryEpochDayOf rejects junk', () {
-      expect(StreakEngine.tryEpochDayOf(''), isNull);
-      expect(StreakEngine.tryEpochDayOf('garbage'), isNull);
-      expect(StreakEngine.tryEpochDayOf('not-a-date'), isNull);
-    });
-
-    test('epochDayOf uses local calendar fields, not the instant', () {
-      expect(
-        StreakEngine.epochDayOf(DateTime(2026, 8, 12, 23, 59)),
-        StreakEngine.tryEpochDayOf('2026-08-12'),
+        StreakEngine.calculate(
+          dates: ['2026-11-01', '2026-11-02', '2026-11-03'].map(d),
+          today: d('2026-11-03'),
+        ),
+        const StreakStats(current: 3, best: 3, total: 3),
       );
     });
   });
@@ -146,6 +116,13 @@ void main() {
       expect(
         const StreakStats(current: 1, best: 2, total: 3).hashCode,
         const StreakStats(current: 1, best: 2, total: 3).hashCode,
+      );
+    });
+
+    test('differing fields are not equal', () {
+      expect(
+        const StreakStats(current: 1, best: 2, total: 3),
+        isNot(const StreakStats(current: 9, best: 2, total: 3)),
       );
     });
 

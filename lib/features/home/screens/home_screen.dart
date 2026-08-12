@@ -40,24 +40,18 @@ class HomeScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         userProfile.when(
-                          data:
-                              (user) => Text(
-                                '$greeting, ${user?.name.split(' ').first ?? 'Champ'}!',
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
-                          loading:
-                              () => Text(
-                                '$greeting!',
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
-                          error:
-                              (_, _) => Text(
-                                '$greeting!',
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
+                          data: (user) => Text(
+                            '$greeting, ${user?.name.split(' ').first ?? 'Champ'}!',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          loading: () => Text(
+                            '$greeting!',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          error: (_, _) => Text(
+                            '$greeting!',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(

@@ -53,21 +53,21 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             // Animated fire icon
             Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                ),
-              ),
-              child: const Icon(
-                Icons.local_fire_department_rounded,
-                size: 60,
-                color: AppColors.primary,
-              ),
-            )
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.local_fire_department_rounded,
+                    size: 60,
+                    color: AppColors.primary,
+                  ),
+                )
                 .animate()
                 .scale(
                   begin: const Offset(0.0, 0.0),
@@ -85,12 +85,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
             // App name with staggered letter animation
             Text(
-              'GYM STREAK',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                letterSpacing: 6,
-                fontWeight: FontWeight.w900,
-              ),
-            )
+                  'GYM STREAK',
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    letterSpacing: 6,
+                    fontWeight: FontWeight.w900,
+                  ),
+                )
                 .animate(delay: 400.ms)
                 .fadeIn(duration: 500.ms)
                 .slideY(begin: 0.3, end: 0, curve: Curves.easeOutCubic),
@@ -99,12 +99,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
             // Tagline
             Text(
-              'Never break the chain',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textTertiary,
-                letterSpacing: 1,
-              ),
-            )
+                  'Never break the chain',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textTertiary,
+                    letterSpacing: 1,
+                  ),
+                )
                 .animate(delay: 800.ms)
                 .fadeIn(duration: 600.ms)
                 .slideY(begin: 0.5, end: 0, curve: Curves.easeOutCubic),
@@ -119,9 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 strokeWidth: 2.5,
                 color: AppColors.primary.withValues(alpha: 0.6),
               ),
-            )
-                .animate(delay: 1400.ms)
-                .fadeIn(duration: 400.ms),
+            ).animate(delay: 1400.ms).fadeIn(duration: 400.ms),
           ],
         ),
       ),

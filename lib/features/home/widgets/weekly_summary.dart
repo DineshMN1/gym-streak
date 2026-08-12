@@ -20,7 +20,7 @@ class WeeklySummary extends ConsumerWidget {
 
         final workoutDates = <String>{};
         for (final log in logs) {
-          workoutDates.add(log.date);
+          workoutDates.add(log.date.toIso());
         }
 
         return Container(
@@ -63,12 +63,12 @@ class WeeklySummary extends ConsumerWidget {
                         DateFormat('E').format(date).substring(0, 2),
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              isToday
-                                  ? AppColors.primary
-                                  : AppColors.textTertiary,
-                          fontWeight:
-                              isToday ? FontWeight.w600 : FontWeight.w400,
+                          color: isToday
+                              ? AppColors.primary
+                              : AppColors.textTertiary,
+                          fontWeight: isToday
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -76,42 +76,35 @@ class WeeklySummary extends ConsumerWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color:
-                              hasWorkout
-                                  ? AppColors.primary
-                                  : isToday
-                                  ? AppColors.primary.withValues(alpha: 0.15)
-                                  : Colors.transparent,
+                          color: hasWorkout
+                              ? AppColors.primary
+                              : isToday
+                              ? AppColors.primary.withValues(alpha: 0.15)
+                              : Colors.transparent,
                           shape: BoxShape.circle,
-                          border:
-                              isToday && !hasWorkout
-                                  ? Border.all(
-                                    color: AppColors.primary,
-                                    width: 2,
-                                  )
-                                  : null,
+                          border: isToday && !hasWorkout
+                              ? Border.all(color: AppColors.primary, width: 2)
+                              : null,
                         ),
                         child: Center(
-                          child:
-                              hasWorkout
-                                  ? const Icon(
-                                    Icons.check_rounded,
-                                    size: 18,
-                                    color: AppColors.background,
-                                  )
-                                  : Text(
-                                    '${date.day}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isFuture
-                                              ? AppColors.textTertiary
-                                              : isToday
-                                              ? AppColors.primary
-                                              : AppColors.textSecondary,
-                                    ),
+                          child: hasWorkout
+                              ? const Icon(
+                                  Icons.check_rounded,
+                                  size: 18,
+                                  color: AppColors.background,
+                                )
+                              : Text(
+                                  '${date.day}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isFuture
+                                        ? AppColors.textTertiary
+                                        : isToday
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
                                   ),
+                                ),
                         ),
                       ),
                     ],

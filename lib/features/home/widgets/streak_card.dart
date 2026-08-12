@@ -23,9 +23,7 @@ class StreakCard extends ConsumerWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -67,11 +65,7 @@ class StreakCard extends ConsumerWidget {
                 value: '${streak.best}',
                 icon: Icons.emoji_events_rounded,
               ),
-              Container(
-                width: 1,
-                height: 32,
-                color: AppColors.border,
-              ),
+              Container(width: 1, height: 32, color: AppColors.border),
               _StatItem(
                 label: 'Total',
                 value: '${streak.total}',
@@ -116,10 +110,7 @@ class _StatItem extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 2),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

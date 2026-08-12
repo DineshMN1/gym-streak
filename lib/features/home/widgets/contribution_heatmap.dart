@@ -15,21 +15,20 @@ class ContributionHeatmap extends ConsumerWidget {
       data: (logs) {
         final workoutDates = <String>{};
         for (final log in logs) {
-          workoutDates.add(log.date);
+          workoutDates.add(log.date.toIso());
         }
         return _HeatmapGrid(workoutDates: workoutDates);
       },
-      loading:
-          () => Container(
-            height: 140,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
-          ),
+      loading: () => Container(
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      ),
       error: (_, _) => const SizedBox.shrink(),
     );
   }
@@ -77,9 +76,10 @@ class _HeatmapGrid extends StatelessWidget {
         orElse: () => null,
       );
       if (firstValidDay != null && firstValidDay.day <= 7) {
-        monthLabels.add(
-          (weekIndex: i, label: DateFormat('MMM').format(firstValidDay)),
-        );
+        monthLabels.add((
+          weekIndex: i,
+          label: DateFormat('MMM').format(firstValidDay),
+        ));
       }
     }
 
@@ -105,10 +105,7 @@ class _HeatmapGrid extends StatelessWidget {
                 size: 16,
               ),
               const SizedBox(width: 8),
-              Text(
-                'Activity',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('Activity', style: Theme.of(context).textTheme.titleMedium),
               const Spacer(),
               Text(
                 '${workoutDates.length} workouts this year',
@@ -137,16 +134,15 @@ class _HeatmapGrid extends StatelessWidget {
                               .firstOrNull;
                           return SizedBox(
                             width: cellSize + cellGap,
-                            child:
-                                label != null
-                                    ? Text(
-                                      label.label,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.textTertiary,
-                                      ),
-                                    )
-                                    : null,
+                            child: label != null
+                                ? Text(
+                                    label.label,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  )
+                                : null,
                           );
                         }),
                       ],
@@ -162,20 +158,18 @@ class _HeatmapGrid extends StatelessWidget {
                           width: dayLabelWidth,
                           height: cellSize + cellGap,
                           child:
-                              (dayIndex == 0 ||
-                                      dayIndex == 2 ||
-                                      dayIndex == 4)
-                                  ? Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      _dayLabel(dayIndex),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.textTertiary,
-                                      ),
+                              (dayIndex == 0 || dayIndex == 2 || dayIndex == 4)
+                              ? Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    _dayLabel(dayIndex),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textTertiary,
                                     ),
-                                  )
-                                  : null,
+                                  ),
+                                )
+                              : null,
                         ),
                         // Cells for each week
                         ...List.generate(weeks.length, (weekIdx) {
@@ -247,20 +241,18 @@ class _HeatmapCell extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.all(cellGap / 2),
       child: Tooltip(
-        message:
-            date != null
-                ? '${DateFormat('MMM d, yyyy').format(date!)}${isActive ? ' - Worked out!' : ''}'
-                : '',
+        message: date != null
+            ? '${DateFormat('MMM d, yyyy').format(date!)}${isActive ? ' - Worked out!' : ''}'
+            : '',
         child: Container(
           width: cellSize,
           height: cellSize,
           decoration: BoxDecoration(
-            color:
-                date == null
-                    ? Colors.transparent
-                    : isActive
-                    ? AppColors.heatmapLevel4
-                    : AppColors.heatmapEmpty,
+            color: date == null
+                ? Colors.transparent
+                : isActive
+                ? AppColors.heatmapLevel4
+                : AppColors.heatmapEmpty,
             borderRadius: BorderRadius.circular(2.5),
           ),
         ),

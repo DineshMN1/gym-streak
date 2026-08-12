@@ -31,10 +31,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final user = await ref.read(authRepositoryProvider).login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final user = await ref
+          .read(authRepositoryProvider)
+          .login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
       if (mounted) {
         if (user != null && user.onboardingComplete) {
           context.go('/home');
@@ -44,9 +46,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_parseError(e.toString()))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_parseError(e.toString()))));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -122,10 +124,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed:
-                          () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (value) {

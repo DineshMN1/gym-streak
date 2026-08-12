@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_streak/core/constants/app_constants.dart';
+import 'package:gym_streak/core/domain/app_failure.dart';
 import 'package:gym_streak/core/domain/experience_level.dart';
 import 'package:gym_streak/core/domain/fitness_goal.dart';
 import 'package:gym_streak/core/domain/weekday.dart';
@@ -65,7 +66,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _saveOnboarding() async {
     final uid = Supabase.instance.client.auth.currentUser?.id;
     final level = _experienceLevel;
-    if (uid == null || level == null) return;
+
+    // Previously both cases returned silently, so the Finish button simply did
+    // nothing and gave the user no idea why.
+    if (uid == null) {
+      if (mounted) context.go('/welcome');
+      return;
+    }
+    if (level == null) {
+      _showMessage('Please choose an experience level.');
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -81,14 +92,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           );
       if (mounted) context.go('/home');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
-      }
+      _showMessage(AppFailure.from(e).message);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

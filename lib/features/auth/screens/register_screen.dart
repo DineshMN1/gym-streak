@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_streak/core/domain/app_failure.dart';
+import 'package:gym_streak/features/auth/email_validation.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/core/widgets/loading_overlay.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
@@ -45,24 +47,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(_parseError(e.toString()))));
+        ).showSnackBar(SnackBar(content: Text(AppFailure.from(e).message)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String _parseError(String error) {
-    if (error.contains('email-already-in-use')) {
-      return 'An account with this email already exists.';
-    }
-    if (error.contains('weak-password')) {
-      return 'Password should be at least 6 characters.';
-    }
-    if (error.contains('invalid-email')) {
-      return 'Please enter a valid email address.';
-    }
-    return 'Registration failed. Please try again.';
   }
 
   @override
@@ -117,17 +106,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(
-                      r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: validateEmail,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -146,15 +125,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: validatePassword,
                 ),
                 const SizedBox(height: 32),
                 SizedBox(

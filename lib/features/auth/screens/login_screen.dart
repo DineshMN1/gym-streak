@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_streak/core/domain/app_failure.dart';
+import 'package:gym_streak/features/auth/email_validation.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/core/widgets/loading_overlay.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
@@ -48,23 +50,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(_parseError(e.toString()))));
+        ).showSnackBar(SnackBar(content: Text(AppFailure.from(e).message)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String _parseError(String error) {
-    if (error.contains('user-not-found') ||
-        error.contains('wrong-password') ||
-        error.contains('invalid-credential')) {
-      return 'Invalid email or password.';
-    }
-    if (error.contains('too-many-requests')) {
-      return 'Too many attempts. Please try again later.';
-    }
-    return 'Login failed. Please try again.';
   }
 
   @override
@@ -104,12 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     labelText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
+                  validator: validateEmail,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -128,12 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Please enter your password'
+                      : null,
                 ),
                 const SizedBox(height: 32),
                 SizedBox(

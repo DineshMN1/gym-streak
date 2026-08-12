@@ -36,6 +36,23 @@
                       android:host="reset-callback"/>
             </intent-filter>
         </activity>
+        <!-- Home-screen widget. Rendered by the launcher from values the app
+             writes into shared storage; see StreakWidgetProvider.kt. -->
+        <!-- exported="true" matches home_widget's own example. A widget
+             provider is driven by broadcasts from outside the app process, and
+             the only capability this exposes is redrawing numbers the user has
+             already chosen to display on their home screen. -->
+        <receiver
+            android:name=".StreakWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/streak_widget_info" />
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

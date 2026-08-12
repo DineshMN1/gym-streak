@@ -8,7 +8,17 @@ class AuthRepository {
 
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
-  Future<UserModel> register({
+  /// Creates the auth user. The matching `profiles` row is created server-side
+  /// by the `on_auth_user_created` trigger — see
+  /// `supabase/migrations/20260812000300_profile_trigger.sql`.
+  ///
+  /// Inserting the profile from here instead would race the session: with
+  /// "Confirm email" enabled `signUp` returns no session, so `auth.uid()` is
+  /// NULL and the RLS insert policy rejects the write.
+  ///
+  /// `name` travels in the signup metadata, which is where the trigger reads it
+  /// from; it is not written by this client.
+  Future<void> register({
     required String name,
     required String email,
     required String password,
@@ -19,19 +29,7 @@ class AuthRepository {
       data: {'name': name},
     );
 
-    final authUser = response.user;
-    if (authUser == null) throw Exception('Registration failed');
-
-    final user = UserModel(
-      uid: authUser.id,
-      name: name,
-      email: email,
-      createdAt: DateTime.now(),
-    );
-
-    await _client.from('profiles').upsert(user.toMap());
-
-    return user;
+    if (response.user == null) throw Exception('Registration failed');
   }
 
   Future<UserModel?> login({
@@ -50,8 +48,11 @@ class AuthRepository {
   }
 
   Future<UserModel?> getUserProfile(String uid) async {
-    final data =
-        await _client.from('profiles').select().eq('id', uid).maybeSingle();
+    final data = await _client
+        .from('profiles')
+        .select()
+        .eq('id', uid)
+        .maybeSingle();
     if (data == null) return null;
     return UserModel.fromMap(data);
   }
@@ -67,10 +68,7 @@ class AuthRepository {
         });
   }
 
-  Future<void> updateUserProfile(
-    String uid,
-    Map<String, dynamic> data,
-  ) async {
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await _client.from('profiles').update(data).eq('id', uid);
   }
 

@@ -1,3 +1,5 @@
+import 'package:gym_streak/core/domain/weekday.dart';
+
 /// A calendar day — no time, no timezone.
 ///
 /// This is what a Postgres `date` column holds and what "the day a workout was
@@ -33,6 +35,9 @@ class CalendarDate implements Comparable<CalendarDate> {
     );
   }
 
+  /// The day [epochDay] days after 1970-01-01.
+  const factory CalendarDate.fromEpochDay(int epochDay) = CalendarDate._;
+
   /// Today's calendar day. Pass [now] to make callers deterministic in tests.
   factory CalendarDate.today({DateTime? now}) =>
       CalendarDate.fromDateTime(now ?? DateTime.now());
@@ -61,6 +66,13 @@ class CalendarDate implements Comparable<CalendarDate> {
     final day = d.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
   }
+
+  /// Which day of the week this falls on.
+  ///
+  /// Epoch day 0 — 1970-01-01 — was a Thursday, so Monday sits at offset 3.
+  /// The extra `+ 7` before the second modulo keeps pre-epoch dates, whose
+  /// epoch day is negative, from producing a negative index.
+  Weekday get weekday => Weekday.values[((epochDay + 3) % 7 + 7) % 7];
 
   /// The day [days] after this one; pass a negative value to go backwards.
   CalendarDate addDays(int days) => CalendarDate._(epochDay + days);

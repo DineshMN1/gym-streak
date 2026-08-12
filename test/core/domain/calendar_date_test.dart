@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gym_streak/core/domain/calendar_date.dart';
+import 'package:gym_streak/core/domain/weekday.dart';
 
 void main() {
   group('CalendarDate.tryParse', () {
@@ -96,6 +97,38 @@ void main() {
 
     test('round-trips dates before the epoch', () {
       expect(CalendarDate.tryParse('1969-12-31')?.toIso(), '1969-12-31');
+    });
+  });
+
+  group('CalendarDate.weekday', () {
+    test('maps known dates to the right day', () {
+      // 2026-08-12 is a Wednesday; the rest walk forward from it.
+      expect(CalendarDate.tryParse('2026-08-10')!.weekday, Weekday.monday);
+      expect(CalendarDate.tryParse('2026-08-11')!.weekday, Weekday.tuesday);
+      expect(CalendarDate.tryParse('2026-08-12')!.weekday, Weekday.wednesday);
+      expect(CalendarDate.tryParse('2026-08-13')!.weekday, Weekday.thursday);
+      expect(CalendarDate.tryParse('2026-08-14')!.weekday, Weekday.friday);
+      expect(CalendarDate.tryParse('2026-08-15')!.weekday, Weekday.saturday);
+      expect(CalendarDate.tryParse('2026-08-16')!.weekday, Weekday.sunday);
+    });
+
+    test('is right at the epoch, which was a Thursday', () {
+      expect(CalendarDate.tryParse('1970-01-01')!.weekday, Weekday.thursday);
+    });
+
+    test('is right before the epoch, where naive modulo goes negative', () {
+      // 1969-12-29 was a Monday. Epoch day is negative here, so a plain
+      // `% 7` would yield a negative index and crash.
+      expect(CalendarDate.tryParse('1969-12-29')!.weekday, Weekday.monday);
+      expect(CalendarDate.tryParse('1969-12-31')!.weekday, Weekday.wednesday);
+    });
+
+    test('agrees with DateTime.weekday', () {
+      for (var i = 0; i < 14; i++) {
+        final dt = DateTime(2026, 8, 1).add(Duration(days: i));
+        final expected = Weekday.values[dt.weekday - 1]; // DateTime: 1 = Monday
+        expect(CalendarDate.fromDateTime(dt).weekday, expected);
+      }
     });
   });
 

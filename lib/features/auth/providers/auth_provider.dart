@@ -4,7 +4,7 @@ import 'package:gym_streak/models/user_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository();
+  return AuthRepository(Supabase.instance.client);
 });
 
 final authStateProvider = StreamProvider<AuthState>((ref) {

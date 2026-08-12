@@ -118,3 +118,21 @@ final class UnknownFailure extends AppFailure {
   const UnknownFailure({super.debugDetail})
     : super(message: 'Something went wrong. Please try again.');
 }
+
+/// Runs [operation], converting anything it throws into an [AppFailure].
+///
+/// Repositories wrap their calls in this so callers only ever have to handle
+/// one error type, and so a raw `PostgrestException` never reaches the UI.
+Future<T> guardFailures<T>(Future<T> Function() operation) async {
+  try {
+    return await operation();
+  } catch (error) {
+    throw AppFailure.from(error);
+  }
+}
+
+/// The stream equivalent of [guardFailures]: values pass through, errors are
+/// converted.
+Stream<T> guardFailureStream<T>(Stream<T> source) {
+  return source.handleError((Object error) => throw AppFailure.from(error));
+}

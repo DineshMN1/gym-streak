@@ -7,7 +7,7 @@ import 'package:gym_streak/models/workout_log.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
-  return WorkoutRepository();
+  return WorkoutRepository(Supabase.instance.client);
 });
 
 final workoutLogsProvider = StreamProvider<List<WorkoutLog>>((ref) {

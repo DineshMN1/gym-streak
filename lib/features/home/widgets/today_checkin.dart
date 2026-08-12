@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gym_streak/core/constants/app_constants.dart';
+import 'package:gym_streak/core/domain/app_failure.dart';
 import 'package:gym_streak/core/domain/workout_type.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/features/home/providers/workout_provider.dart';
@@ -90,7 +91,28 @@ class TodayCheckin extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      // Was SizedBox.shrink(), which made the app's primary action silently
+      // vanish from the home screen whenever the stream errored.
+      error: (error, _) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded, color: AppColors.error),
+            const SizedBox(width: 12),
+            Expanded(child: Text(AppFailure.from(error).message)),
+            TextButton(
+              onPressed: () => ref.invalidate(workoutLogsProvider),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -131,11 +153,23 @@ class TodayCheckin extends ConsumerWidget {
                 return GestureDetector(
                   onTap: () async {
                     Navigator.pop(context);
+                    final messenger = ScaffoldMessenger.of(context);
                     final uid = Supabase.instance.client.auth.currentUser?.id;
                     if (uid == null) return;
-                    await ref
-                        .read(workoutRepositoryProvider)
-                        .logWorkout(uid: uid, workoutType: type);
+                    try {
+                      await ref
+                          .read(workoutRepositoryProvider)
+                          .logWorkout(uid: uid, workoutType: type);
+                      // Picks up a workout that went to the offline queue
+                      // instead of reaching the server.
+                      ref.invalidate(pendingWorkoutsProvider);
+                    } catch (e) {
+                      // Only reached for failures that are not simply being
+                      // offline — those are queued rather than thrown.
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(AppFailure.from(e).message)),
+                      );
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(

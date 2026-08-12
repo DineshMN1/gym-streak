@@ -9,7 +9,7 @@ class ContributionHeatmap extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final logsAsync = ref.watch(workoutLogsProvider);
+    final logsAsync = ref.watch(visibleWorkoutLogsProvider);
 
     return logsAsync.when(
       data: (logs) {

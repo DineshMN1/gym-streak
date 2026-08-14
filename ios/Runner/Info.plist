@@ -26,8 +26,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>Gym Streak</string>
 	<key>CFBundleName</key>
-	<string>gym_streak</string>
+	<string>Gym Streak</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

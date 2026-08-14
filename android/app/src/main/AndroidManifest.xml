@@ -3,7 +3,7 @@
          permission is requested only when the user turns them on. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
-        android:label="gym_streak"
+        android:label="Gym Streak"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

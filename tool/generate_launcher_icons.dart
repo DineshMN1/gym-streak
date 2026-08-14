@@ -28,12 +28,21 @@ void main() {
     'mipmap-xxxhdpi': 192,
   };
 
-  Future<Uint8List> render(int pixels, {bool background = true}) async {
+  Future<Uint8List> render(
+    int pixels, {
+    bool background = true,
+    double scale = 1.0,
+  }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
+    // Painting into a centred sub-square is what keeps the adaptive
+    // foreground inside its circular safe zone.
+    final inner = pixels * scale;
+    final offset = (pixels - inner) / 2;
+    canvas.translate(offset, offset);
     StreakMarkPainter(
       includeBackground: background,
-    ).paint(canvas, Size(pixels.toDouble(), pixels.toDouble()));
+    ).paint(canvas, Size(inner, inner));
     final image = await recorder.endRecording().toImage(pixels, pixels);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
@@ -51,13 +60,17 @@ void main() {
   });
 
   test('writes the adaptive foreground layer', () async {
-    // An adaptive foreground is a 108dp canvas whose central 72dp is the only
-    // guaranteed-visible area — everything outside can be masked away by the
-    // launcher. The mark's own padding leaves its grid occupying 64% of the
-    // canvas, so it lands inside that safe zone without extra scaling.
+    // An adaptive foreground is a 108dp canvas whose safe zone is a CIRCLE of
+    // 72dp — launchers are free to mask to a circle, and Android 12+ reuses
+    // this same icon for the system splash with a circular mask.
     //
-    // Transparent, because the background layer supplies the colour. Baking a
-    // ground in here is what produces the double-square look.
+    // Fitting a square grid inside a circle is a diagonal problem, not a width
+    // problem. At full size the grid is 69dp wide but 98dp across the diagonal,
+    // so a circular mask slices every corner. Painting at 72% brings the
+    // diagonal to 70dp, inside the circle.
+    //
+    // Transparent, because the background layer supplies the colour.
+    const safeZoneScale = 0.72;
     const foregroundSizes = <String, int>{
       'mipmap-mdpi': 108,
       'mipmap-hdpi': 162,
@@ -67,7 +80,11 @@ void main() {
     };
 
     for (final entry in foregroundSizes.entries) {
-      final bytes = await render(entry.value, background: false);
+      final bytes = await render(
+        entry.value,
+        background: false,
+        scale: safeZoneScale,
+      );
       final file = File(
         'android/app/src/main/res/${entry.key}/ic_launcher_foreground.png',
       );

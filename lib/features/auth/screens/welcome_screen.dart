@@ -15,21 +15,12 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               const Spacer(flex: 2),
               // Logo area
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.local_fire_department_rounded,
-                  size: 56,
-                  color: AppColors.primary,
-                ),
+              // Bare icon: no tinted plate, no outline. The mark carries
+              // itself against the dark ground.
+              Icon(
+                Icons.local_fire_department_rounded,
+                size: 88,
+                color: AppColors.primary.withValues(alpha: 0.55),
               ),
               const SizedBox(height: 32),
               Text(

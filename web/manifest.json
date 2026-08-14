@@ -1,6 +1,6 @@
 {
-    "name": "gym_streak",
-    "short_name": "gym_streak",
+    "name": "Gym Streak",
+    "short_name": "Gym Streak",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

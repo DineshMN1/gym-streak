@@ -23,8 +23,7 @@ class StreakCard extends ConsumerWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        // No border: the gradient alone is enough to separate the card from
-        // the background, and an outline competes with the number inside it.
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -32,12 +31,9 @@ class StreakCard extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Dimmed on purpose. At full strength the flame competes with
-              // the streak number beside it; the number is the thing worth
-              // reading, and the flame is supporting punctuation.
-              Icon(
+              const Icon(
                 Icons.local_fire_department_rounded,
-                color: AppColors.primary.withValues(alpha: 0.55),
+                color: AppColors.primary,
                 size: 48,
               ),
               const SizedBox(width: 8),

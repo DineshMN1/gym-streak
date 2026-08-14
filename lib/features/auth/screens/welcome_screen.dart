@@ -20,7 +20,7 @@ class WelcomeScreen extends StatelessWidget {
               Icon(
                 Icons.local_fire_department_rounded,
                 size: 88,
-                color: AppColors.primary.withValues(alpha: 0.55),
+                color: AppColors.primary.withValues(alpha: 0.85),
               ),
               const SizedBox(height: 32),
               Text(

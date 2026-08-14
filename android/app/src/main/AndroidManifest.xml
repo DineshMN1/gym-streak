@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required to reach Supabase at all.
+         `flutter create` declares INTERNET only in the debug and profile
+         manifests, describing it as needed "for development" because that is
+         what hot reload uses. Release builds do not inherit those, so without
+         this line every network call in a release APK fails at the OS level —
+         which surfaces as "No connection" on a perfectly good wifi link. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Required from Android 13 (API 33); reminders are opt-in and the
          permission is requested only when the user turns them on. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Blocks a push that would fail CI.
+#
+# Runs the same four gates as .github/workflows/ci.yml, so a red build is
+# caught here in ~40s instead of after it has already reached main.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Bypass in an emergency:  git push --no-verify
+set -uo pipefail
+
+RED=$'\033[31m'; GREEN=$'\033[32m'; DIM=$'\033[2m'; OFF=$'\033[0m'
+fail() { echo "${RED}✗ $1${OFF}"; echo "${DIM}  fix it, or bypass with: git push --no-verify${OFF}"; exit 1; }
+
+echo "${DIM}pre-push: running the same checks as CI…${OFF}"
+
+dart format --set-exit-if-changed lib test >/dev/null 2>&1 \
+  || fail "formatting — run: dart format lib test"
+
+flutter analyze >/dev/null 2>&1 \
+  || { flutter analyze; fail "flutter analyze"; }
+
+flutter test >/dev/null 2>&1 \
+  || { flutter test; fail "flutter test"; }
+
+# The daylight-saving guard is inert in any timezone without DST, so this
+# second run is the only one that can catch the streak regression returning.
+TZ=America/Los_Angeles flutter test >/dev/null 2>&1 \
+  || { TZ=America/Los_Angeles flutter test; fail "flutter test under TZ=America/Los_Angeles"; }
+
+echo "${GREEN}✓ all checks passed${OFF}"

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_streak/core/branding/streak_mark.dart';
 import 'package:gym_streak/core/theme/app_theme.dart';
 import 'package:gym_streak/features/auth/providers/auth_provider.dart';
 import 'package:gym_streak/models/user_model.dart';
@@ -64,23 +65,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Animated fire icon
-            Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department_rounded,
-                    size: 60,
-                    color: AppColors.primary,
-                  ),
-                )
+            // The app mark, not a stock flame. Same painter the launcher
+            // icons are generated from, so the splash and the home screen
+            // cannot drift apart.
+            const StreakMark(size: 112, includeBackground: true)
                 .animate()
                 .scale(
                   begin: const Offset(0.0, 0.0),

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppColors.background. The launcher fills the whole masked shape with
+         this, so the icon keeps its own ground instead of borrowing white. -->
+    <color name="ic_launcher_background">#0D0D0D</color>
+</resources>

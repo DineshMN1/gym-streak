@@ -28,13 +28,12 @@ void main() {
     'mipmap-xxxhdpi': 192,
   };
 
-  Future<Uint8List> render(int pixels) async {
+  Future<Uint8List> render(int pixels, {bool background = true}) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    const StreakMarkPainter().paint(
-      canvas,
-      Size(pixels.toDouble(), pixels.toDouble()),
-    );
+    StreakMarkPainter(
+      includeBackground: background,
+    ).paint(canvas, Size(pixels.toDouble(), pixels.toDouble()));
     final image = await recorder.endRecording().toImage(pixels, pixels);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
@@ -45,6 +44,32 @@ void main() {
       final bytes = await render(entry.value);
       final file = File(
         'android/app/src/main/res/${entry.key}/ic_launcher.png',
+      );
+      file.writeAsBytesSync(bytes);
+      expect(file.lengthSync(), greaterThan(0));
+    }
+  });
+
+  test('writes the adaptive foreground layer', () async {
+    // An adaptive foreground is a 108dp canvas whose central 72dp is the only
+    // guaranteed-visible area — everything outside can be masked away by the
+    // launcher. The mark's own padding leaves its grid occupying 64% of the
+    // canvas, so it lands inside that safe zone without extra scaling.
+    //
+    // Transparent, because the background layer supplies the colour. Baking a
+    // ground in here is what produces the double-square look.
+    const foregroundSizes = <String, int>{
+      'mipmap-mdpi': 108,
+      'mipmap-hdpi': 162,
+      'mipmap-xhdpi': 216,
+      'mipmap-xxhdpi': 324,
+      'mipmap-xxxhdpi': 432,
+    };
+
+    for (final entry in foregroundSizes.entries) {
+      final bytes = await render(entry.value, background: false);
+      final file = File(
+        'android/app/src/main/res/${entry.key}/ic_launcher_foreground.png',
       );
       file.writeAsBytesSync(bytes);
       expect(file.lengthSync(), greaterThan(0));

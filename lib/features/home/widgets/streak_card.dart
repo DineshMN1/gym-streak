@@ -14,16 +14,12 @@ class StreakCard extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withValues(alpha: 0.15),
-            AppColors.primary.withValues(alpha: 0.05),
-          ],
-        ),
+        // Plain surface, matching every other card. The lime wash tinted the
+        // whole panel and left the streak number with nothing to stand out
+        // against — the accent belongs on the number, not behind it.
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [

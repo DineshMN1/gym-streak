@@ -60,19 +60,6 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.local_fire_department_rounded,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 24),

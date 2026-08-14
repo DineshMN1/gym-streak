@@ -21,7 +21,12 @@ class ProfileScreen extends ConsumerWidget {
         child: userProfile.when(
           data: (user) {
             if (user == null) {
-              return const Center(child: Text('User not found'));
+              // A dead end previously. If the profile really is missing the
+              // trigger did not run, so say what to do rather than stating a
+              // fact the user cannot act on.
+              return _ProfileUnavailable(
+                onRetry: () => ref.invalidate(currentUserProfileProvider),
+              );
             }
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -385,6 +390,46 @@ class _StatCard extends StatelessWidget {
             style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Shown when the profile cannot be read.
+class _ProfileUnavailable extends StatelessWidget {
+  const _ProfileUnavailable({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.person_off_outlined,
+              size: 48,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "We couldn't load your profile",
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check your connection and try again.',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
       ),
     );
   }

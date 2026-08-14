@@ -68,13 +68,35 @@ class AuthRepository {
     return UserModel.fromMap(data);
   }
 
-  Stream<UserModel?> userProfileStream(String uid) {
-    return guardFailureStream(
+  /// The user's profile, live.
+  ///
+  /// Seeded with a direct read before following the realtime stream. Relying on
+  /// realtime alone made the first paint depend on a websocket connecting and
+  /// delivering a snapshot — until it did, the stream had produced nothing and
+  /// the profile screen rendered "User not found" for a user who plainly
+  /// existed. Realtime is also the first thing to fail on a flaky connection,
+  /// and a profile should not vanish because a socket did.
+  Stream<UserModel?> userProfileStream(String uid) async* {
+    try {
+      yield await getUserProfile(uid);
+    } catch (_) {
+      // The live stream below is still worth attempting.
+    }
+
+    UserModel? lastKnown;
+    yield* guardFailureStream(
       _client.from('profiles').stream(primaryKey: ['id']).eq('id', uid).map((
         rows,
       ) {
-        if (rows.isEmpty) return null;
-        return UserModel.fromMap(rows.first);
+        if (rows.isNotEmpty) {
+          lastKnown = UserModel.fromMap(rows.first);
+          return lastKnown;
+        }
+        // An empty emission does not mean the account is gone — realtime can
+        // deliver one before it has caught up. Falling back to the last known
+        // profile stops a loaded screen collapsing into an error. A genuinely
+        // deleted account signs the user out, which the router handles.
+        return lastKnown;
       }),
     );
   }
